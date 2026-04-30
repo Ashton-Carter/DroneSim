@@ -1,0 +1,6 @@
+{
+  "rust-analyzer.linkedProjects": [
+    "drone-sim/crates/sim-engine/Cargo.toml"
+  ],
+  "rust-analyzer.cargo.target": "wasm32-unknown-unknown"
+}
