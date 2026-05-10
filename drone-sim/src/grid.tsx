@@ -7,7 +7,7 @@ type GridProps = {
     width: number;
     milePerUnit:number;
 }
-const visualScalerAmount = 2000;
+const visualScalerAmount = 500;
 function drawBoundry(ctx: CanvasRenderingContext2D, canvasHeight: number, canvasWidth: number){
     ctx.beginPath()
     ctx.moveTo(0, 0);
