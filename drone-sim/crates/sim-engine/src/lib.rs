@@ -1,7 +1,6 @@
 
 use wasm_bindgen::prelude::*;
 
-use crate::vehicle::{Vehicle, VehicleState};
 mod arena;
 mod general_objects;
 mod vehicle;
@@ -80,6 +79,24 @@ impl Simulation {
         self.return_objects_as_renderables()
     }
 
+    pub fn add_circle_target(&mut self, vehicle_identifier: &str, x: f32, y:f32, z:f32, circle_distance: f32, clockwise: bool){
+        let location = math::Coordinates{x, y, z};
+        for object in self.objects.iter_mut() {
+            match object{
+                general_objects::MoveableObject::Vehicle(v) => {
+                    if !v.name.eq(vehicle_identifier){
+                        continue;
+                    }
+                    v.instructions.push(
+                        vehicle::VehicleInstructions{
+                            objective:vehicle::VehicleObjective::CircleTarget { location, distance: circle_distance, clockwise}
+                        }
+                    );
+                },
+                _ => {}
+            }
+        }
+    }
 
 }
 

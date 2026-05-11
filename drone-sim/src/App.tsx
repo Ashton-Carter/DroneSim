@@ -14,7 +14,8 @@ function App() {
   useEffect(()=>{
     const sim = new Simulation(height/milePerUnit, width/milePerUnit);
     simRef.current = sim;
-    sim.add_vehicle("drone", width/2, height/2, 0, 40, 20, 8);
+    sim.add_vehicle("drone1", width/2, height/2, 100, 0, 40, 20, 8);
+    sim.add_circle_target("drone1", 150, 0, 150, 100);
     function updateLoop(){
       setObjects(sim.tick());  
       requestAnimationFrame(updateLoop);
