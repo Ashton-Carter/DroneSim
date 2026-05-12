@@ -3,9 +3,11 @@ use crate::vehicle;
 use crate::projectile;
 use crate::math;
 
+
 #[wasm_bindgen]
 pub struct RenderObject {
-    name: String,
+    object_type: String,
+    id: u64,
     x: f32,
     y: f32,
     z: f32,
@@ -18,9 +20,10 @@ pub struct RenderObject {
 #[wasm_bindgen]
 impl RenderObject {
     #[wasm_bindgen(constructor)]
-    pub fn new(name: String, x: f32, y:f32, z:f32, heading: f32, length_feet: f32, width_feet: f32, height_feet: f32)->Self{
+    pub fn new(object_type: String, id: u64, x: f32, y:f32, z:f32, heading: f32, length_feet: f32, width_feet: f32, height_feet: f32)->Self{
         Self {
-            name,
+            object_type,
+            id,
             x,
             y,
             z,
@@ -31,8 +34,8 @@ impl RenderObject {
         }
     }
     #[wasm_bindgen(getter)]
-    pub fn name(&self)->String{
-        self.name.clone()
+    pub fn object_type(&self)->String{
+        self.object_type.clone()
     }
      #[wasm_bindgen(getter)]
     pub fn x(&self)->f32{
@@ -71,7 +74,7 @@ pub enum MoveableObject {
 }
 
 pub enum ChangeEnum {
-    Destruction{radius: f32, coordinates: math::Coordinates},
+    Destruction{radius: f32, coordinates: math::Vec3},
     NewObject{object: MoveableObject},
 }
 
@@ -79,8 +82,43 @@ pub enum ChangeEnum {
 impl MoveableObject {
     pub fn as_render_object(&self)->RenderObject{
         match self {
-            MoveableObject::Vehicle(v) => RenderObject::new(v.name.clone(), v.state.coordinates.x, v.state.coordinates.y, v.state.coordinates.z, v.state.heading, v.state.length_feet, v.state.width_feet, v.state.height_feet ),
-            MoveableObject::Projectile(p) => RenderObject::new(p.name.clone(), p.state.coordinates.x, p.state.coordinates.y, p.state.coordinates.z, p.state.heading, p.state.length_feet, p.state.width_feet, p.state.height_feet),
+            MoveableObject::Vehicle(v) => {
+                let heading = math::heading(
+                    v.state.movement_state.orientation_speed_vector.x, 
+                    v.state.movement_state.orientation_speed_vector.y
+                );
+            
+                RenderObject::new(
+                    v.vehicle_type.to_string(), 
+                    v.id, 
+                    v.state.coordinates.x, 
+                    v.state.coordinates.y, 
+                    v.state.coordinates.z, 
+                    heading, 
+                    v.length_feet, 
+                    v.width_feet, 
+                    v.height_feet
+                )
+            },
+            MoveableObject::Projectile(p) => 
+            {
+                let heading = math::heading(
+                    p.state.movement_state.orientation_speed_vector.x, 
+                    p.state.movement_state.orientation_speed_vector.y
+                );
+                RenderObject::new(
+                    p.projectile_type.to_string(), 
+                    p.id, 
+                    p.state.coordinates.x, 
+                    p.state.coordinates.y, 
+                    p.state.coordinates.z, 
+                    heading, 
+                    p.length_feet, 
+                    p.width_feet, 
+                    p.height_feet
+                )               
+            }
+            ,
         }
     }
     pub fn tick(&mut self)-> Vec<ChangeEnum> {

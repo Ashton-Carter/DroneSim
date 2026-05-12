@@ -1,15 +1,24 @@
 use crate::math;
 use crate::general_objects;
-use crate::math::Coordinates;
-use crate::projectile;
 
 
 pub enum VehicleObjective {
-    GoToLocation{location: math::Coordinates},
-    PatrolLocations{locations: Vec<math::Coordinates>, return_to: math::Coordinates},
+    GoToLocation{location: math::Vec3},
+    PatrolLocations{locations: Vec<math::Vec3>, return_to: math::Vec3},
     EngageTarget,
-    HoldPosition{location: math::Coordinates},
-    CircleTarget{location: math::Coordinates, distance: f32, clockwise: bool},
+    HoldPosition{location: math::Vec3},
+    CircleTarget{location: math::Vec3, distance: f32, clockwise: bool},
+}
+
+pub enum VehicleType {
+    Drone
+}
+impl VehicleType {
+    pub fn to_string(&self)-> String{
+        match self {
+            VehicleType::Drone => String::from("drone")
+        }
+    }
 }
 
 pub struct VehicleInstructions {
@@ -17,65 +26,78 @@ pub struct VehicleInstructions {
 }
 
 pub struct VehicleState {
-    pub coordinates: math::Coordinates,
-    pub heading: f32,
-    pub dx: f32,
-    pub dy: f32,
-    pub dz: f32,
-    pub ddx: f32,
-    pub ddy: f32,
-    pub ddz: f32,
-    pub length_feet: f32,
-    pub width_feet: f32,
-    pub height_feet: f32,
+    pub coordinates: math::Vec3,
+    pub movement_state: math::MovementState,
 }
 
 pub struct Vehicle {
-    pub name: String,
+    pub id: u64,
+    pub vehicle_type: VehicleType,
+    pub max_speed_fpt: f32,
     pub state: VehicleState,
+    pub length_feet: f32,
+    pub width_feet: f32,
+    pub height_feet: f32,
     pub instructions: Vec<VehicleInstructions>,
 }
 
 impl Vehicle {
-    pub fn new(name: String, state: VehicleState, instructions: Vec<VehicleInstructions>)->Self{
+    pub fn new(id: u64, vehicle_type: VehicleType, max_speed_fpt: f32, state: VehicleState, length_feet: f32, width_feet: f32, height_feet: f32, instructions: Vec<VehicleInstructions>)->Self{
         Self {
-            name,
+            id,
+            vehicle_type,
+            max_speed_fpt,
             state,
+            length_feet,
+            height_feet,
+            width_feet,
             instructions
         }
     }
     pub fn tick(&mut self)-> Vec<general_objects::ChangeEnum>{
-        let mut changes: Vec<general_objects::ChangeEnum> = Vec::new();
+        let changes: Vec<general_objects::ChangeEnum> = Vec::new();
+        self.state.movement_state.momentum_vector = 
+        self.state.movement_state.momentum_vector.midpoint_vector(
+            &self.state.movement_state.orientation_speed_vector, 
+            0.5
+        );
+        self.state.coordinates.x += math::feet_to_miles(self.state.movement_state.momentum_vector.x);
+        self.state.coordinates.y += math::feet_to_miles(self.state.movement_state.momentum_vector.y);
+        self.state.coordinates.z += math::feet_to_miles(self.state.movement_state.momentum_vector.z);
 
         for instruction in self.instructions.iter() {
             match instruction.objective {
-                VehicleObjective::CircleTarget { location, distance, clockwise} => {
-                    if self.state.coordinates.x < location.x {
-                        
-                    }
+                VehicleObjective::GoToLocation { location} => {
+                    let location_vector = self.state.coordinates.to_location_vector(&location).normalize();
+                    let orientation_vector = self.state.movement_state.orientation_speed_vector.normalize();
+                    let new_orientation_vector = orientation_vector
+                        .new_vec_with_max_change(&location_vector, 0.2)
+                        .scale(self.max_speed_fpt
+                    );
+                    self.state.movement_state.orientation_speed_vector = new_orientation_vector;
                 }
                 _ => {}
             }
         }
 
-        let projectile_state = projectile::ProjectileState {
-            coordinates: self.state.coordinates,
-            speed_fps: 1000.0,
-            dspeed_fps: -0.1,
-            heading: self.state.heading,
-            length_feet: 6.0,
-            width_feet: 1.0,
-            height_feet: 1.0,
-        };
-        changes.push(
-            general_objects::ChangeEnum::NewObject{
-                object: general_objects::MoveableObject::Projectile(
-                    projectile::Projectile::new(
-                        String::from("proj"), 
-                        projectile_state)
-                )
-            }
-        );
+        // let projectile_state = projectile::ProjectileState {
+        //     coordinates: self.state.coordinates,
+        //     speed_fps: 1000.0,
+        //     dspeed_fps: -0.1,
+        //     heading: self.state.heading,
+        //     length_feet: 6.0,
+        //     width_feet: 1.0,
+        //     height_feet: 1.0,
+        // };
+        // changes.push(
+        //     general_objects::ChangeEnum::NewObject{
+        //         object: general_objects::MoveableObject::Projectile(
+        //             projectile::Projectile::new(
+        //                 String::from("proj"), 
+        //                 projectile_state)
+        //         )
+        //     }
+        // );
         changes
     }
 
