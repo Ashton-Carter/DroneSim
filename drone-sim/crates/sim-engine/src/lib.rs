@@ -38,7 +38,8 @@ impl Simulation {
         self.arena.width
     }
     #[wasm_bindgen]
-    pub fn add_vehicle(&mut self, vehicle_type: String, max_speed_fpt: f32, x: f32, y: f32, z: f32, heading: f32, length_feet: f32, width_feet: f32, height_feet: f32) -> u64{
+    pub fn add_vehicle(&mut self, vehicle_type: String, max_speed_fpt: f32, x: f32, y: f32, z: f32, x_y_heading: f32, length_feet: f32, width_feet: f32, height_feet: f32) -> u64{
+        let (x_head, y_head) = math::heading_to_x_y(x_y_heading);
         let state = vehicle::VehicleState {
             coordinates: math::Vec3 {
                 x,
@@ -47,7 +48,7 @@ impl Simulation {
             },
             movement_state: math::MovementState { 
                 momentum_vector: Vec3{x:0.0, y:0.0, z:0.0},
-                orientation_speed_vector: Vec3 { x:0.0, y:0.0, z:0.0 }
+                orientation_speed_vector: Vec3 { x:x_head, y:y_head, z:0.0 }
             }
         };
         let v_typ: vehicle::VehicleType;

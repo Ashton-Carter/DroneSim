@@ -22,11 +22,11 @@ function drawBoundry(ctx: CanvasRenderingContext2D, canvasHeight: number, canvas
     ctx.stroke();
 }
 
-function drawObjects(objects: RenderObject[], milePerUnit:number, ctx: CanvasRenderingContext2D){
+function drawObjects(objects: RenderObject[], milePerUnit:number, ctx: CanvasRenderingContext2D, height: number){
   objects.forEach(object => {
     console.log(object);
     ctx.save();
-    ctx.translate(object.x/milePerUnit, object.y/milePerUnit);
+    ctx.translate(object.x/milePerUnit,  height-object.y/milePerUnit);
     ctx.rotate(-to_radians(object.heading));
     const width = (object.width_feet/5280/milePerUnit)*visualScalerAmount;
     const length = (object.length_feet/5280/milePerUnit)*visualScalerAmount;
@@ -77,7 +77,7 @@ function Grid({ objects, height_miles, width_miles, milePerUnit }: GridProps) {
 
     ctx.strokeStyle = "#000000";
     drawBoundry(ctx, canvas.height, canvas.width);
-    drawObjects(objects, milePerUnit, ctx);
+    drawObjects(objects, milePerUnit, ctx, canvas.height);
   }, [objects, height_miles, width_miles, milePerUnit]);
 
   return <canvas ref={canvasRef} />;
